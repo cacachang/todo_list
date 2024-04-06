@@ -1,18 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { TodoForm } from "./TodoForm";
+import { TodoList } from "./TodoList";
 import { v4 } from "uuid";
 import "./App.css";
 
 function App() {
-  const [inputValue, setValue] = useState("");
-  const [lists, setLists] = useState([]);
+  const [lists, setLists] = useState(() => {
+    let storage = localStorage.getItem("ITEMS");
 
-  const handleInput = (e) => {
-    e.preventDefault();
+    if (storage == null) {
+      return [];
+    }
+
+    return JSON.parse(storage);
+  });
+
+  const handleInput = (inputValue) => {
     setLists((currentValue) => [
       ...currentValue,
       { id: v4(), title: inputValue, isCompleted: false }
     ]);
-    setValue("");
   };
 
   const handleDelete = (id) => {
@@ -31,45 +38,18 @@ function App() {
     );
   };
 
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(lists));
+  }, [lists]);
+
   return (
     <>
-      <form onSubmit={(e) => handleInput(e)} className="new-item-form">
-        <div className="form-row">
-          <label htmlFor="item">New ITEM</label>
-          <input
-            type="text"
-            id="item"
-            onChange={(e) => setValue(e.target.value)}
-            value={inputValue}
-          />
-        </div>
-        <button className="btn">Add</button>
-      </form>
-      <h1 className="header"> TODO LIST</h1>
-      <ul className="list">
-        {lists &&
-          lists.length !== 0 &&
-          lists.map((list) => {
-            return (
-              <li key={list.id}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={list.isCompleted}
-                    onChange={(e) => handleCheck(list.id, e.target)}
-                  />
-                  {list.title}
-                </label>
-                <button
-                  className="btn btn-danger"
-                  onClick={() => handleDelete(list.id)}
-                >
-                  DELETE
-                </button>
-              </li>
-            );
-          })}
-      </ul>
+      <TodoForm handleInput={handleInput} />
+      <TodoList
+        lists={lists}
+        handleCheck={handleCheck}
+        handleDelete={handleDelete}
+      />
     </>
   );
 }
